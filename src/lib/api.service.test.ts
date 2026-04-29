@@ -240,8 +240,98 @@ describe('API Service - Autenticación', () => {
     });
   });
 
+  // ==========================================  // GRUPO: CRUD de Películas
   // ==========================================
-  // GRUPO: Manejo de errores HTTP
+  describe('CRUD de Películas', () => {
+    beforeEach(() => {
+      const token = 'valid-token';
+      authToken.set(token);
+    });
+
+    it('debería obtener lista de películas', async () => {
+      // ARRANGE
+      const mockMovies = [
+        { id: '1', title: 'Inception', director: 'Nolan', year: 2010, isFavorite: false },
+        { id: '2', title: 'The Matrix', director: 'Wachowski', year: 1999, isFavorite: true }
+      ];
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/json' : null
+        },
+        json: async () => mockMovies
+      });
+
+      // ACT
+      const movies = await api.getMovies();
+
+      // ASSERT
+      expect(movies).toEqual(mockMovies);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'http://localhost:3000/api/movies',
+        expect.any(Object)
+      );
+    });
+
+    it('debería hacer toggle de favorito correctamente', async () => {
+      // ARRANGE
+      const movieId = '1';
+      const updatedMovie = {
+        id: movieId,
+        title: 'Inception',
+        director: 'Nolan',
+        year: 2010,
+        isFavorite: true
+      };
+
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/json' : null
+        },
+        json: async () => updatedMovie
+      });
+
+      // ACT
+      const result = await api.toggleFavorite(movieId);
+
+      // ASSERT
+      expect(result).toEqual(updatedMovie);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `http://localhost:3000/api/movies/${movieId}/favorite`,
+        expect.objectContaining({
+          method: 'PATCH'
+        })
+      );
+    });
+
+    it('debería manejar error al hacer toggle de favorito', async () => {
+      // ARRANGE
+      (globalThis.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        headers: {
+          get: (name: string) => name === 'content-type' ? 'application/json' : null
+        },
+        json: async () => ({ error: 'Película no encontrada' })
+      });
+
+      // ACT & ASSERT
+      try {
+        await api.toggleFavorite('invalid-id');
+        expect(true).toBe(false);
+      } catch (error) {
+        expect(error).toBeInstanceOf(ApiError);
+        expect((error as ApiError).status).toBe(404);
+        expect((error as ApiError).message).toBe('Película no encontrada');
+      }
+    });
+  });
+
+  // ==========================================  // GRUPO: Manejo de errores HTTP
   // ==========================================
   describe('Manejo de errores', () => {
     it('debería lanzar ApiError con código de estado correcto', async () => {

@@ -84,6 +84,30 @@
   function handleCancelEdit() {
     editingMovie = null;
   }
+
+  // Toggle favorito de una película
+  async function handleToggleFavorite(id: string) {
+    feedbackMessage = null;
+    moviesStore.clearError();
+
+    const ok = await moviesStore.toggleFavorite(id);
+    if (ok) {
+      const movie = moviesStore.movies.find(m => m.id === id);
+      const status = movie?.isFavorite ? 'añadida a' : 'eliminada de';
+      feedbackMessage = { type: 'info', text: `Película ${status} favoritos.` };
+    }
+  }
+
+  // Califica una película
+  async function handleRate(movie: Movie, rating: number) {
+    feedbackMessage = null;
+    moviesStore.clearError();
+
+    const ok = await moviesStore.rateMovie(movie, rating);
+    if (ok) {
+      feedbackMessage = { type: 'info', text: `Película calificada con ${rating} estrellas.` };
+    }
+  }
 </script>
 
 <section class="container mx-auto px-4 py-8">
@@ -119,7 +143,7 @@
       {:else}
         <div class="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {#each moviesStore.movies as movie (movie.id)}
-            <MovieCard {movie} ondelete={handleDelete} onedit={handleEdit} />
+            <MovieCard {movie} ondelete={handleDelete} onedit={handleEdit} onfavoritetoggle={handleToggleFavorite} onrate={(rating) => handleRate(movie, rating)} />
           {/each}
         </div>
       {/if}
