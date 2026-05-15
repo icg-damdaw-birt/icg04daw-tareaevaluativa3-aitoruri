@@ -1,5 +1,4 @@
-﻿import { PUBLIC_API_URL as ENV_API_URL } from '$env/static/public';
-import { authToken } from './auth.store.svelte';
+﻿import { authToken } from './auth.store.svelte';
 import type {
   ApiErrorPayload,
   Credentials,
@@ -11,7 +10,19 @@ import type {
 
 // Configuración base del servicio API
 const FALLBACK_API_URL = 'http://localhost:3000';
-const PUBLIC_API_URL = ENV_API_URL || FALLBACK_API_URL;
+
+// Obtener URL del API de múltiples fuentes (en orden de preferencia):
+// 1. Variable de entorno PUBLIC_API_URL (build time - local)
+// 2. Variable en runtime (Vercel inyecta en el HTML)
+// 3. Fallback a localhost
+const PUBLIC_API_URL = (() => {
+  // Intenta import.meta.env primero (funciona con fallback)
+  const envUrl = import.meta.env.PUBLIC_API_URL as string | undefined;
+  if (envUrl && envUrl.trim()) {
+    return envUrl;
+  }
+  return FALLBACK_API_URL;
+})();
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
