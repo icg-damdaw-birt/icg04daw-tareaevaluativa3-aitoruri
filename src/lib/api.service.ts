@@ -1,4 +1,5 @@
-﻿import { authToken } from './auth.store.svelte';
+﻿import { PUBLIC_API_URL } from '$env/static/public';
+import { authToken } from './auth.store.svelte';
 import type {
   ApiErrorPayload,
   Credentials,
@@ -10,30 +11,6 @@ import type {
 
 // Configuración base del servicio API
 const FALLBACK_API_URL = 'http://localhost:3000';
-
-// Obtener URL del API con soporte para Vercel + local
-// - En desarrollo local: lee de import.meta.env (de .env)
-// - En Vercel/producción: intenta leer de window.__env__ inyectado en HTML
-// - Si todo falla: usa fallback
-function getApiUrl(): string {
-  // 1. Intenta build-time variable (SvelteKit/Vite)
-  const buildUrl = import.meta.env.PUBLIC_API_URL as string | undefined;
-  if (buildUrl?.trim()) {
-    return buildUrl;
-  }
-
-  // 2. Si estamos en el navegador, intenta runtime variable
-  if (typeof window !== 'undefined') {
-    const runtimeUrl = (window as any).__ENV__?.PUBLIC_API_URL as string | undefined;
-    if (runtimeUrl?.trim()) {
-      return runtimeUrl;
-    }
-  }
-
-  return FALLBACK_API_URL;
-}
-
-const PUBLIC_API_URL = getApiUrl();
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
@@ -68,7 +45,9 @@ function sanitizeBaseUrl(url: string): string {
 }
 
 // ✅ Configuración para SvelteKit: usa PUBLIC_ prefix
-const API_BASE_URL = sanitizeBaseUrl(PUBLIC_API_URL);
+const API_BASE_URL = sanitizeBaseUrl(
+  PUBLIC_API_URL ?? FALLBACK_API_URL
+);
 
 // Función central: wrapper genérico para todas las peticiones HTTP
 // Añade headers, autenticación y manejo de errores homogéneo
