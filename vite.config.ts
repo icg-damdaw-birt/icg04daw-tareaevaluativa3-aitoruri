@@ -6,6 +6,9 @@ export default defineConfig({
     test: {
         include: ['src/**/*.{test,spec}.{js,ts}'],
         globals: true,
-        environment: 'jsdom'
+        environment: 'jsdom',
+        env: {
+            PUBLIC_API_URL: 'https://mivideoteca-backend-auriarte.onrender.com'
+        }
     }
 });
