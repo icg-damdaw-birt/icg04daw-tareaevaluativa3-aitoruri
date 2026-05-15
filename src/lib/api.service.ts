@@ -11,18 +11,29 @@ import type {
 // Configuración base del servicio API
 const FALLBACK_API_URL = 'http://localhost:3000';
 
-// Obtener URL del API de múltiples fuentes (en orden de preferencia):
-// 1. Variable de entorno PUBLIC_API_URL (build time - local)
-// 2. Variable en runtime (Vercel inyecta en el HTML)
-// 3. Fallback a localhost
-const PUBLIC_API_URL = (() => {
-  // Intenta import.meta.env primero (funciona con fallback)
-  const envUrl = import.meta.env.PUBLIC_API_URL as string | undefined;
-  if (envUrl && envUrl.trim()) {
-    return envUrl;
+// Obtener URL del API con soporte para Vercel + local
+// - En desarrollo local: lee de import.meta.env (de .env)
+// - En Vercel/producción: intenta leer de window.__env__ inyectado en HTML
+// - Si todo falla: usa fallback
+function getApiUrl(): string {
+  // 1. Intenta build-time variable (SvelteKit/Vite)
+  const buildUrl = import.meta.env.PUBLIC_API_URL as string | undefined;
+  if (buildUrl?.trim()) {
+    return buildUrl;
   }
+
+  // 2. Si estamos en el navegador, intenta runtime variable
+  if (typeof window !== 'undefined') {
+    const runtimeUrl = (window as any).__ENV__?.PUBLIC_API_URL as string | undefined;
+    if (runtimeUrl?.trim()) {
+      return runtimeUrl;
+    }
+  }
+
   return FALLBACK_API_URL;
-})();
+}
+
+const PUBLIC_API_URL = getApiUrl();
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
