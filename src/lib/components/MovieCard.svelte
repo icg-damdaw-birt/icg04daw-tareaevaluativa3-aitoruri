@@ -6,12 +6,16 @@
     movie,
     showActions = true,
     ondelete,
-    onedit
+    onedit,
+    onfavoritetoggle,
+    onrate
   }: {
     movie: Movie;
     showActions?: boolean;
     ondelete?: (id: string) => void;
     onedit?: (movie: Movie) => void;
+    onfavoritetoggle?: (id: string) => void;
+    onrate?: (rating: number) => void;
   } = $props();
 
   // Handlers: ejecutan callbacks del padre directamente
@@ -21,6 +25,14 @@
 
   function handleEdit() {
     onedit?.(movie);
+  }
+
+  function handleToggleFavorite() {
+    onfavoritetoggle?.(movie.id);
+  }
+
+  function handleRate(rating: number) {
+    onrate?.(rating);
   }
 </script>
 
@@ -49,8 +61,35 @@
       {/if}
     </div>
 
+    <!-- Sistema de calificación con 5 estrellas -->
+    <div class="flex items-center gap-1">
+      {#each { length: 5 } as _, i}
+        <button
+          type="button"
+          class="text-2xl transition-transform hover:scale-110"
+          title="Calificar: {i + 1} estrellas"
+          onclick={() => handleRate(i + 1)}
+        >
+          {i + 1 <= (movie.rating ?? 0) ? '⭐' : '☆'}
+        </button>
+      {/each}
+      {#if movie.rating && movie.rating > 0}
+        <span class="ml-2 text-sm text-slate-600">({movie.rating}/5)</span>
+      {:else}
+        <span class="ml-2 text-sm text-slate-400">Sin calificar</span>
+      {/if}
+    </div>
+
     {#if showActions}
       <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          class="rounded border px-3 py-2 transition {movie.isFavorite ? 'border-yellow-500 bg-yellow-50 text-yellow-600 hover:bg-yellow-100' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}"
+          title={movie.isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+          onclick={handleToggleFavorite}
+        >
+          {movie.isFavorite ? '⭐ Favorito' : '☆ Favorito'}
+        </button>
         <button
           type="button"
           class="w-full rounded border border-slate-300 px-3 py-2 text-slate-700 transition hover:bg-slate-50"
